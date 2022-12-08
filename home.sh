@@ -1,66 +1,60 @@
 #!/bin/bash
 
-get_misincorporations(dir){
-    # note: do NOT use path to the sub-folder
-    # within mapDamage folders. Otherwise this
-    # whole thing won't work
-    for mis in $dir/*/misincorporation.txt
-    do
-        echo "$mis";
-    done
+check_what_file(){
+    local result="false"
+    filename=$(basename -- $1)
+    if [ $filename == $2 ]
+    then
+        local result="true"
+    fi
+    echo "$result"
 }
 
-check_dirname(dir){
-    # check if directory is a mapDamage directory
-    # TO DO: test if the recursivity work
-    dirname="$(basename -- $dir)"
-    if [ "$dirname" == *mapDamage ]
+check_pathsfile(){
+    is_pathfile=$(check_what_file $1 "MpDmg_paths.txt")
+    if [ "$is_pathfile" = true ]
     then
-        get_misincorporations($dir);
+        pathfile $1
     else
-        for d in $dir*/
-        do
-            check_dirname($d);
-        done
+        echo "$1 is not the pathfile"
     fi
 }
 
-check_filename(fil){
-    # check if file is a misincorporation file
-    filname="$(basename -- $fil)"
-    if [ "$filname" == "misincorporation.txt" ]
+check_misfile(){
+    is_misfile=$(check_what_file $1 "misincorporation.txt")
+    if [ "$is_misfile" = true ]
     then
-        txt2csv($fil);
+        echo "$1 is a misincorporation file"
     else
-        echo "$arg is not a misincorporation file"
+        echo "$1 is not a misincorporation file"
     fi
-
 }
 
-check_paths(arglist){
-    # check if args in list are directory
-    # or files and launch the appropriate
-    # fonctions.
-    for arg in $arglist
+pathfile(){
+    while IFS= read -r line
     do
-        if [[ -d $arg ]]
+        if [[ -d $line ]]
         then
-            echo "$arg is a directory";
-            check_dirname;
-        elif [[ -f $arg ]]
+            echo "$line is a directory"
+        elif [[ -f $line]]
         then
-            echo "$arg is a file";
+            echo "$line is a file"
+            check_pathsfile $line
+            check_misfile $line
         else
-            echo "$arg is not valid";
-            exit 1;
+            echo "$line is not a correct path"
         fi
-    done
+    done < $1
 }
+
 # main
 if [ $# -eq 0 ]
 then
     echo "No arguments supplied";
     exit 1;
 fi
-arglist=( "$@" )
-check_paths($arglist)
+for i in $@
+do
+    check_pathsfile $i
+    #check_paths $i
+done
