@@ -33,8 +33,6 @@ mk_csv(){
     # misincorporation files have no reason
     # to be outside of a standard MapDamage
     # folder.
-    # TO DO: stop letting it produce empty files
-    # with bullshit names when sed doesn't work.
     if [[ -f $1 ]]
     then
         sample=$(basename $(dirname $1))
@@ -64,8 +62,6 @@ check_4mpdmg(){
     # function for directories
     # assume that folder follows
     # MapDamage standard convention
-    # Otherwise it will create gibberishly named
-    # empty files.
     for mpdmg in $1/*mapDamage
     do
         path=$mpdmg/*/misincorporation.txt
