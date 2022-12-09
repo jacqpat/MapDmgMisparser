@@ -33,13 +33,18 @@ mk_csv(){
     # misincorporation files have no reason
     # to be outside of a standard MapDamage
     # folder.
-    sample=$(basename $(dirname $1))
-    foldname=$(basename $(dirname $(dirname $1)))
-    ordername=$(echo $foldname | cut -d'.' -f2)
-    speciesname=$(echo $foldname | cut -d'.' -f3 | cut -d '-' -f1)
-    refname="${ordername}_${speciesname}"
-    sed "/#/d" $1 | sed "s/ \+/;/g" > "dirsubs/${sample}_${refname}_misincorporation.csv"
-    echo "dirsubs/${sample}_${refname}_misincorporation.csv"
+    # TO DO: stop letting it produce empty files
+    # with bullshit names when sed doesn't work.
+    if [[ -f $1 ]]
+    then
+        sample=$(basename $(dirname $1))
+        foldname=$(basename $(dirname $(dirname $1)))
+        ordername=$(echo $foldname | cut -d'.' -f2)
+        speciesname=$(echo $foldname | cut -d'.' -f3 | cut -d '-' -f1)
+        refname="${ordername}_${speciesname}"
+        sed "/#/d" $1 | sed "s/ \+/;/g" > "dirsubs/${sample}_${refname}_misincorporation.csv"
+        echo "dirsubs/${sample}_${refname}_misincorporation.csv"
+    fi
 }
 
 check_misfile(){
@@ -49,11 +54,23 @@ check_misfile(){
     is_misfile=$(check_what_file $1 "misincorporation.txt")
     if [ "$is_misfile" = true ]
     then
-        echo "$1 is a misincorporation file"
         mk_csv $1
     else
         echo "$1 is not a misincorporation file"
     fi
+}
+
+check_4mpdmg(){
+    # function for directories
+    # assume that folder follows
+    # MapDamage standard convention
+    # Otherwise it will create gibberishly named
+    # empty files.
+    for mpdmg in $1/*mapDamage
+    do
+        path=$mpdmg/*/misincorporation.txt
+        check_misfile $path
+    done
 }
 
 pathfile(){
@@ -64,10 +81,9 @@ pathfile(){
     do
         if [[ -d $line ]]
         then
-            echo "$line is a directory"
+            check_4mpdmg $line
         elif [[ -f $line ]]
         then
-            echo "$line is a file"
             check_pathsfile $line
             check_misfile $line
         else
@@ -79,11 +95,10 @@ pathfile(){
 # main
 if [ $# -eq 0 ]
 then
-    echo "No arguments supplied";
+    echo "No argument supplied";
     exit 1;
 fi
 for i in $@
 do
     check_pathsfile $i
-    #check_paths $i
 done
